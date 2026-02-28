@@ -1,0 +1,24 @@
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+app:
+  jwt:
+    secret: test-secret-key-must-be-at-least-32-characters-long
+    expiration-ms: 3600000
+  idempotency:
+    ttl-hours: 24
+  rate-limit:
+    transfers-per-minute: 100   # High limit to avoid interference in tests
+  kafka:
+    topics:
+      transfer-completed: transfer-completed-test
+      transfer-reversed: transfer-reversed-test
+
+logging:
+  level:
+    com.p2p.payment: DEBUG
