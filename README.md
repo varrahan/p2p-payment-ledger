@@ -23,14 +23,7 @@ A production-grade peer-to-peer payment backend demonstrating fintech engineerin
 - Docker + Docker Compose
 - Java 21 (for local development only)
 
-### 1. Configure environment
-
-```bash
-cp .env.example .env
-# Edit .env — fill in DB_PASSWORD and JWT_SECRET at minimum
-```
-
-### 2. Run with Docker Compose
+### 1. Run with Docker Compose
 
 ```bash
 docker-compose up --build
@@ -38,7 +31,7 @@ docker-compose up --build
 
 The API will be available at `http://localhost:8080`.
 
-### 3. Run locally (dev)
+### 2. Run locally (dev)
 
 ```bash
 # Start infrastructure only
