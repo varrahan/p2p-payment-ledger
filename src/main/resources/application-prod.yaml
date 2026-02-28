@@ -1,0 +1,26 @@
+spring:
+  config:
+    import: "aws-secretsmanager:/p2p-payment/prod"
+
+  datasource:
+    hikari:
+      maximum-pool-size: 50       
+      minimum-idle: 10
+
+  jpa:
+    properties:
+      hibernate:
+        format_sql: false        
+
+logging:
+  level:
+    com.p2p.payment: INFO
+    org.springframework.security: WARN
+    org.hibernate.SQL: WARN       
+  pattern:
+    console: '{"timestamp":"%d{yyyy-MM-dd HH:mm:ss}","level":"%level","logger":"%logger{36}","message":"%msg"}%n'
+
+management:
+  endpoint:
+    health:
+      show-details: never
