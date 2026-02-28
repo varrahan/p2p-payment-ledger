@@ -6,7 +6,6 @@ import com.p2p.payment.domain.enums.LedgerEntryType;
 import com.p2p.payment.domain.enums.TransferStatus;
 import com.p2p.payment.dto.request.TransferRequest;
 import com.p2p.payment.repository.*;
-import com.p2p.payment.security.JwtService;
 import com.p2p.payment.service.TransferService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -15,8 +14,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -34,7 +31,6 @@ class TransferIntegrationTest extends BaseIntegrationTest {
     @Autowired private WalletRepository walletRepository;
     @Autowired private LedgerEntryRepository ledgerEntryRepository;
     @Autowired private TransferRepository transferRepository;
-    @Autowired private JwtService jwtService;
     @Autowired private PasswordEncoder passwordEncoder;
 
     private User alice;
@@ -49,29 +45,29 @@ class TransferIntegrationTest extends BaseIntegrationTest {
         walletRepository.deleteAll();
         userRepository.deleteAll();
 
-        alice = userRepository.save(User.builder()
+        alice = userRepository.save(java.util.Objects.requireNonNull(User.builder()
                 .email("alice@example.com")
                 .password(passwordEncoder.encode("password"))
                 .fullName("Alice Test")
-                .build());
+                .build()));
 
-        bob = userRepository.save(User.builder()
+        bob = userRepository.save(java.util.Objects.requireNonNull(User.builder()
                 .email("bob@example.com")
                 .password(passwordEncoder.encode("password"))
                 .fullName("Bob Test")
-                .build());
+                .build()));
 
-        aliceWallet = walletRepository.save(Wallet.builder()
+        aliceWallet = walletRepository.save(java.util.Objects.requireNonNull(Wallet.builder()
                 .user(alice)
                 .currency("USD")
                 .currentBalance(new BigDecimal("1000.00"))
-                .build());
+                .build()));
 
-        bobWallet = walletRepository.save(Wallet.builder()
+        bobWallet = walletRepository.save(java.util.Objects.requireNonNull(Wallet.builder()
                 .user(bob)
                 .currency("USD")
                 .currentBalance(new BigDecimal("500.00"))
-                .build());
+                .build()));
     }
 
     @Test
@@ -85,8 +81,8 @@ class TransferIntegrationTest extends BaseIntegrationTest {
         assertThat(response.getAmount()).isEqualByComparingTo("100.00");
 
         // Verify materialized balances
-        var updatedAlice = walletRepository.findById(aliceWallet.getId()).orElseThrow();
-        var updatedBob   = walletRepository.findById(bobWallet.getId()).orElseThrow();
+        var updatedAlice = walletRepository.findById(java.util.Objects.requireNonNull(aliceWallet.getId(), "Wallet ID must not be null")).orElseThrow();
+        var updatedBob   = walletRepository.findById(java.util.Objects.requireNonNull(bobWallet.getId(), "Wallet ID must not be null")).orElseThrow();
         assertThat(updatedAlice.getCurrentBalance()).isEqualByComparingTo("900.00");
         assertThat(updatedBob.getCurrentBalance()).isEqualByComparingTo("600.00");
 
@@ -114,7 +110,7 @@ class TransferIntegrationTest extends BaseIntegrationTest {
         assertThat(first.getStatus()).isEqualTo(second.getStatus());
 
         // Balance should only be affected once
-        var updatedAlice = walletRepository.findById(aliceWallet.getId()).orElseThrow();
+        var updatedAlice = walletRepository.findById(java.util.Objects.requireNonNull(aliceWallet.getId(), "Wallet ID must not be null")).orElseThrow();
         assertThat(updatedAlice.getCurrentBalance()).isEqualByComparingTo("950.00");
 
         // Only 2 ledger entries (1 debit + 1 credit) — not 4
@@ -132,7 +128,7 @@ class TransferIntegrationTest extends BaseIntegrationTest {
             .hasMessageContaining("Insufficient funds");
 
         // Balances must not change
-        var updatedAlice = walletRepository.findById(aliceWallet.getId()).orElseThrow();
+        var updatedAlice = walletRepository.findById(java.util.Objects.requireNonNull(aliceWallet.getId(), "Wallet ID must not be null")).orElseThrow();
         assertThat(updatedAlice.getCurrentBalance()).isEqualByComparingTo("1000.00");
     }
 
@@ -175,7 +171,7 @@ class TransferIntegrationTest extends BaseIntegrationTest {
         assertThat(failureCount.get()).isEqualTo(10);
 
         // Final balance must be exactly $0
-        var updatedAlice = walletRepository.findById(aliceWallet.getId()).orElseThrow();
+        var updatedAlice = walletRepository.findById(java.util.Objects.requireNonNull(aliceWallet.getId(), "Wallet ID must not be null")).orElseThrow();
         assertThat(updatedAlice.getCurrentBalance()).isEqualByComparingTo("0.00");
     }
 
@@ -204,20 +200,20 @@ class TransferIntegrationTest extends BaseIntegrationTest {
         var transfer = transferService.transfer(alice.getId(), idempotencyKey,
                 buildRequest(aliceWallet.getId(), bobWallet.getId(), "200.00"));
 
-        assertThat(walletRepository.findById(aliceWallet.getId()).orElseThrow()
+        assertThat(walletRepository.findById(java.util.Objects.requireNonNull(aliceWallet.getId(), "Wallet ID must not be null")).orElseThrow()
                 .getCurrentBalance()).isEqualByComparingTo("800.00");
 
         // Reverse it
         transferService.reverse(transfer.getId(), alice.getId(), UUID.randomUUID().toString());
 
         // Balances restored
-        assertThat(walletRepository.findById(aliceWallet.getId()).orElseThrow()
+        assertThat(walletRepository.findById(java.util.Objects.requireNonNull(aliceWallet.getId(), "Wallet ID must not be null")).orElseThrow()
                 .getCurrentBalance()).isEqualByComparingTo("1000.00");
-        assertThat(walletRepository.findById(bobWallet.getId()).orElseThrow()
+        assertThat(walletRepository.findById(java.util.Objects.requireNonNull(bobWallet.getId(), "Wallet ID must not be null")).orElseThrow()
                 .getCurrentBalance()).isEqualByComparingTo("500.00");
 
         // Transfer status is REVERSED
-        var reversed = transferRepository.findById(transfer.getId()).orElseThrow();
+        var reversed = transferRepository.findById(java.util.Objects.requireNonNull(transfer.getId(), "Transfer ID must not be null")).orElseThrow();
         assertThat(reversed.getStatus()).isEqualTo(TransferStatus.REVERSED);
 
         // 4 ledger entries: original debit+credit + reversal debit+credit
