@@ -3,7 +3,6 @@ package com.p2p.payment.unit.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.p2p.payment.domain.entity.*;
 import com.p2p.payment.domain.enums.IdempotencyStatus;
-import com.p2p.payment.domain.enums.TransferStatus;
 import com.p2p.payment.dto.request.TransferRequest;
 import com.p2p.payment.exception.IdempotencyConflictException;
 import com.p2p.payment.exception.InsufficientFundsException;
@@ -52,7 +51,7 @@ class TransferServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        ReflectionTestUtils.setField(transferService, "idempotencyTtlHours", 24);
+        ReflectionTestUtils.setField(java.util.Objects.requireNonNull(transferService, "TransferService must not be null"), "idempotencyTtlHours", 24);
 
         alice = User.builder().id(UUID.randomUUID()).email("alice@test.com").password("hashed").fullName("Alice").build();
         bob   = User.builder().id(UUID.randomUUID()).email("bob@test.com").password("hashed").fullName("Bob").build();
@@ -71,6 +70,7 @@ class TransferServiceImplTest {
     }
 
     @Test
+    @SuppressWarnings("null")
     @DisplayName("Throws TransferException when sender and receiver wallets are identical")
     void transfer_sameWallet_throwsException() {
         var request = buildRequest(aliceWallet.getId(), aliceWallet.getId(), "10.00");
@@ -82,6 +82,7 @@ class TransferServiceImplTest {
     }
 
     @Test
+    @SuppressWarnings("null")
     @DisplayName("Throws InsufficientFundsException when balance is too low")
     void transfer_insufficientFunds_throwsException() {
         var request = buildRequest(aliceWallet.getId(), bobWallet.getId(), "9999.00");
@@ -96,6 +97,7 @@ class TransferServiceImplTest {
     }
 
     @Test
+    @SuppressWarnings("null")
     @DisplayName("Throws TransferException when authenticated user does not own sender wallet")
     void transfer_unauthorizedSender_throwsException() {
         UUID impostor = UUID.randomUUID();
@@ -128,6 +130,7 @@ class TransferServiceImplTest {
     }
 
     @Test
+    @SuppressWarnings("null")
     @DisplayName("Throws TransferException when currency mismatches sender wallet")
     void transfer_currencyMismatch_throwsException() {
         aliceWallet = Wallet.builder()
