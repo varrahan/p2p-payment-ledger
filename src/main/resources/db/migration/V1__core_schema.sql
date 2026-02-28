@@ -1,7 +1,3 @@
--- ============================================================
--- V1: Core Schema — Users, Wallets, Ledger, Transfers
--- ============================================================
-
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
 -- ---- Users ----
