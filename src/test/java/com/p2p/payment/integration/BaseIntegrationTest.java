@@ -13,11 +13,13 @@ import org.testcontainers.utility.DockerImageName;
 @Testcontainers
 public abstract class BaseIntegrationTest {
 
+    @SuppressWarnings("resource")
     static final PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16-alpine")
             .withDatabaseName("p2p_ledger_test")
             .withUsername("test_user")
             .withPassword("test_password");
-
+            
+    @SuppressWarnings("resource")
     static final GenericContainer<?> redis = new GenericContainer<>("redis:7-alpine")
             .withExposedPorts(6379)
             .withCommand("redis-server", "--requirepass", "test-secret-password");
