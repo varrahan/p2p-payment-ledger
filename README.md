@@ -1,6 +1,6 @@
 # P2P Payment Ledger
 
-A production-grade peer-to-peer payment backend demonstrating fintech engineering principles: **Data Integrity**, **Concurrency Control**, **Security**, and **Scalability**.
+A peer-to-peer payment backend to display the following engineering principles: **Data Integrity**, **Concurrency Control**, **Security**, and **Scalability**.
 
 ---
 
