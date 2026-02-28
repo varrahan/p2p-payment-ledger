@@ -20,7 +20,7 @@ CREATE INDEX idx_users_email ON users (email);
 CREATE TABLE wallets (
     id              UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id         UUID        NOT NULL REFERENCES users (id),
-    currency        CHAR(3)     NOT NULL DEFAULT 'USD',  -- ISO 4217
+    currency        VARCHAR(3)  NOT NULL DEFAULT 'USD',  -- ISO 4217
     current_balance NUMERIC(19, 4) NOT NULL DEFAULT 0
         CONSTRAINT wallets_non_negative_balance CHECK (current_balance >= 0),
     created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -36,7 +36,7 @@ CREATE TABLE transfers (
     receiver_wallet_id UUID           NOT NULL REFERENCES wallets (id),
     amount             NUMERIC(19, 4) NOT NULL
         CONSTRAINT transfers_positive_amount CHECK (amount > 0),
-    currency           CHAR(3)        NOT NULL,
+    currency           VARCHAR(3)     NOT NULL,
     status             VARCHAR(12)    NOT NULL DEFAULT 'PENDING'
         CONSTRAINT transfers_valid_status CHECK (status IN ('PENDING','PROCESSING','COMPLETED','FAILED','REVERSED')),
     idempotency_key    VARCHAR(255)   UNIQUE NOT NULL,
@@ -59,7 +59,7 @@ CREATE TABLE ledger_entries (
         CONSTRAINT ledger_valid_entry_type CHECK (entry_type IN ('DEBIT', 'CREDIT')),
     amount      NUMERIC(19, 4) NOT NULL
         CONSTRAINT ledger_positive_amount CHECK (amount > 0),
-    currency    CHAR(3)        NOT NULL,
+    currency    VARCHAR(3)     NOT NULL,
     created_at  TIMESTAMPTZ    NOT NULL DEFAULT now()
 );
 
@@ -90,7 +90,6 @@ CREATE TABLE outbox_events (
 
 CREATE INDEX idx_outbox_unpublished ON outbox_events (published, created_at) WHERE published = false;
 
--- ---- updated_at auto-update trigger ----
 CREATE OR REPLACE FUNCTION update_updated_at_column()
 RETURNS TRIGGER AS $$
 BEGIN
