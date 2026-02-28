@@ -19,7 +19,8 @@ public abstract class BaseIntegrationTest {
             .withPassword("test_password");
 
     static final GenericContainer<?> redis = new GenericContainer<>("redis:7-alpine")
-            .withExposedPorts(6379);
+            .withExposedPorts(6379)
+            .withCommand("redis-server", "--requirepass", "test-secret-password");
 
     static final KafkaContainer kafka = new KafkaContainer(
             DockerImageName.parse("confluentinc/cp-kafka:7.6.1"));
@@ -38,7 +39,7 @@ public abstract class BaseIntegrationTest {
 
         registry.add("spring.data.redis.host", redis::getHost);
         registry.add("spring.data.redis.port", () -> redis.getMappedPort(6379));
-        registry.add("spring.data.redis.password", () -> "");
+        registry.add("spring.data.redis.password", () -> "test-secret-password");
 
         registry.add("spring.kafka.bootstrap-servers", kafka::getBootstrapServers);
     }
