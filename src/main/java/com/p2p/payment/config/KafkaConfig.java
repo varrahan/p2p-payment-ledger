@@ -17,7 +17,7 @@ public class KafkaConfig {
 
     @Bean
     public NewTopic transferCompletedTopic() {
-        return TopicBuilder.name(transferCompletedTopic)
+        return TopicBuilder.name(java.util.Objects.requireNonNull(transferCompletedTopic, "Complete topic name cannot be null"))
                 .partitions(3)
                 .replicas(1)
                 .build();
@@ -25,7 +25,7 @@ public class KafkaConfig {
 
     @Bean
     public NewTopic transferReversedTopic() {
-        return TopicBuilder.name(transferReversedTopic)
+        return TopicBuilder.name(java.util.Objects.requireNonNull(transferReversedTopic, "Reversed topic name cannot be null"))
                 .partitions(3)
                 .replicas(1)
                 .build();
