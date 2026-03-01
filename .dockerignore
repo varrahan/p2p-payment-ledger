@@ -6,6 +6,7 @@ README.md
 *.pem
 *.pub
 *.key
+firebase-service-account.json
 
 # Build Artifacts
 target/
