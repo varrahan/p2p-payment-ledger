@@ -13,5 +13,7 @@ public interface UserService {
 
     AuthResponse login(LoginRequest request);
 
+    void changePassword(UUID userId, String currentPassword, String newPassword);
+
     UserResponse getById(UUID id);
 }
