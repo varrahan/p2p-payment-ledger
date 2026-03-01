@@ -9,6 +9,7 @@ import com.p2p.payment.dto.response.ReconciliationResponse;
 import com.p2p.payment.dto.response.TransferResponse;
 import com.p2p.payment.exception.*;
 import com.p2p.payment.repository.*;
+import com.p2p.payment.notification.service.NotificationPublisher;
 import com.p2p.payment.service.RateLimitService;
 import com.p2p.payment.service.TransferService;
 import lombok.RequiredArgsConstructor;
@@ -35,6 +36,7 @@ public class TransferServiceImpl implements TransferService {
     private final IdempotencyKeyRepository idempotencyKeyRepository;
     private final OutboxEventRepository outboxEventRepository;
     private final RateLimitService rateLimitService;
+    private final NotificationPublisher notificationPublisher;
 
     @Value("${app.idempotency.ttl-hours}")
     private int idempotencyTtlHours;
@@ -46,7 +48,7 @@ public class TransferServiceImpl implements TransferService {
         rateLimitService.checkTransferRateLimit(authenticatedUserId);
 
         // --- Step 2: Idempotency check ---
-        var existingKey = idempotencyKeyRepository.findById(java.util.Objects.requireNonNull(idempotencyKey, "Idempotency key cannot be null"));
+        var existingKey = idempotencyKeyRepository.findById(idempotencyKey);
         if (existingKey.isPresent()) {
             var ik = existingKey.get();
             if (ik.getStatus() == IdempotencyStatus.COMPLETED) {
@@ -72,7 +74,7 @@ public class TransferServiceImpl implements TransferService {
                 .status(IdempotencyStatus.PROCESSING)
                 .expiresAt(OffsetDateTime.now().plusHours(idempotencyTtlHours))
                 .build();
-        idempotencyKeyRepository.save(java.util.Objects.requireNonNull(ik, "Idempotency key cannot be null"));
+        idempotencyKeyRepository.save(ik);
 
         // --- Step 5: Acquire pessimistic locks in consistent ID order (prevents deadlock) ---
         List<Wallet> lockedWallets = walletRepository.findByIdsWithLock(
@@ -125,7 +127,7 @@ public class TransferServiceImpl implements TransferService {
                 .idempotencyKey(idempotencyKey)
                 .description(request.getDescription())
                 .build();
-        transferRepository.save(java.util.Objects.requireNonNull(transfer, "Transfer cannot be null"));
+        transferRepository.save(transfer);
 
         // --- Step 10: Write double-entry ledger records ---
         var debitEntry = LedgerEntry.builder()
@@ -135,7 +137,7 @@ public class TransferServiceImpl implements TransferService {
                 .amount(request.getAmount())
                 .currency(request.getCurrency())
                 .build();
-        ledgerEntryRepository.save(java.util.Objects.requireNonNull(debitEntry, "Debit entry cannot be null"));
+        ledgerEntryRepository.save(debitEntry);
 
         var creditEntry = LedgerEntry.builder()
                 .transfer(transfer)
@@ -144,7 +146,7 @@ public class TransferServiceImpl implements TransferService {
                 .amount(request.getAmount())
                 .currency(request.getCurrency())
                 .build();
-        ledgerEntryRepository.save(java.util.Objects.requireNonNull(creditEntry, "Credit entry cannot be null"));
+        ledgerEntryRepository.save(creditEntry);
 
         // --- Step 11: Update materialized balances (SAME transaction as ledger inserts) ---
         senderWallet.setCurrentBalance(senderWallet.getCurrentBalance().subtract(request.getAmount()));
@@ -159,7 +161,31 @@ public class TransferServiceImpl implements TransferService {
         // --- Step 13: Write outbox event (Transactional Outbox pattern) ---
         writeOutboxEvent("TransferCompletedEvent", transfer);
 
-        // --- Step 14: Mark idempotency key COMPLETED ---
+        // --- Step 14: Publish notification events ---
+        // Notify receiver — Push only (fast UX confirmation)
+        var receiver = receiverWallet.getUser();
+        var sender   = senderWallet.getUser();
+        notificationPublisher.publishTransferReceived(
+                receiver.getId(),
+                receiver.getEmail(),
+                receiver.getFullName(),
+                request.getAmount(),
+                request.getCurrency(),
+                sender.getFullName(),
+                transfer.getId()
+        );
+
+        // Notify sender if this is a large withdrawal — Push + Email (security trail)
+        notificationPublisher.publishLargeWithdrawalIfRequired(
+                sender.getId(),
+                sender.getEmail(),
+                sender.getFullName(),
+                request.getAmount(),
+                request.getCurrency(),
+                senderWallet.getId()
+        );
+
+        // --- Step 15: Mark idempotency key COMPLETED ---
         ik.setStatus(IdempotencyStatus.COMPLETED);
         idempotencyKeyRepository.save(ik);
 
@@ -172,9 +198,9 @@ public class TransferServiceImpl implements TransferService {
     @Transactional
     public TransferResponse reverse(UUID transferId, UUID authenticatedUserId, String idempotencyKey) {
         // Idempotency check for reversal
-        var existingKey = idempotencyKeyRepository.findById(java.util.Objects.requireNonNull(idempotencyKey, "Idempotency key cannot be null"));
+        var existingKey = idempotencyKeyRepository.findById(idempotencyKey);
         if (existingKey.isPresent() && existingKey.get().getStatus() == IdempotencyStatus.COMPLETED) {
-            return transferRepository.findById(java.util.Objects.requireNonNull(transferId, "Transfer ID cannot be null"))
+            return transferRepository.findById(transferId)
                     .map(this::toResponse)
                     .orElseThrow(() -> new ResourceNotFoundException("Transfer not found"));
         }
@@ -187,10 +213,10 @@ public class TransferServiceImpl implements TransferService {
                 .status(IdempotencyStatus.PROCESSING)
                 .expiresAt(OffsetDateTime.now().plusHours(idempotencyTtlHours))
                 .build();
-        idempotencyKeyRepository.save(java.util.Objects.requireNonNull(ik, "Idempotency key cannot be null"));
+        idempotencyKeyRepository.save(ik);
 
         // Load and validate original transfer
-        var transfer = transferRepository.findById(java.util.Objects.requireNonNull(transferId, " Transfer ID cannot be null"))
+        var transfer = transferRepository.findById(transferId)
                 .orElseThrow(() -> new ResourceNotFoundException("Transfer not found: " + transferId));
 
         if (transfer.getStatus() != TransferStatus.COMPLETED) {
@@ -227,7 +253,7 @@ public class TransferServiceImpl implements TransferService {
                 .amount(transfer.getAmount())
                 .currency(transfer.getCurrency())
                 .build();
-        ledgerEntryRepository.save(java.util.Objects.requireNonNull(reversalDebit, "Reversal debit cannot be null"));
+        ledgerEntryRepository.save(reversalDebit);
 
         var reversalCredit = LedgerEntry.builder()
                 .transfer(transfer)
@@ -236,7 +262,7 @@ public class TransferServiceImpl implements TransferService {
                 .amount(transfer.getAmount())
                 .currency(transfer.getCurrency())
                 .build();
-        ledgerEntryRepository.save(java.util.Objects.requireNonNull(reversalCredit, "Reversal credit cannot be null"));
+        ledgerEntryRepository.save(reversalCredit);
 
         // Update balances
         originalReceiver.setCurrentBalance(originalReceiver.getCurrentBalance().subtract(transfer.getAmount()));
@@ -260,7 +286,7 @@ public class TransferServiceImpl implements TransferService {
     @Override
     @Transactional(readOnly = true)
     public TransferResponse getById(UUID transferId, UUID authenticatedUserId) {
-        var transfer = transferRepository.findById(java.util.Objects.requireNonNull(transferId, " Transfer ID cannot be null"))
+        var transfer = transferRepository.findById(transferId)
                 .orElseThrow(() -> new ResourceNotFoundException("Transfer not found: " + transferId));
 
         // Only sender or receiver can view the transfer
@@ -276,7 +302,7 @@ public class TransferServiceImpl implements TransferService {
     @Override
     @Transactional(readOnly = true)
     public Page<TransferResponse> getTransferHistory(UUID walletId, UUID authenticatedUserId, Pageable pageable) {
-        var wallet = walletRepository.findById(java.util.Objects.requireNonNull(walletId, " Wallet ID cannot be null"))
+        var wallet = walletRepository.findById(walletId)
                 .orElseThrow(() -> new ResourceNotFoundException("Wallet not found: " + walletId));
 
         if (!wallet.getUser().getId().equals(authenticatedUserId)) {
@@ -318,7 +344,7 @@ public class TransferServiceImpl implements TransferService {
                 .eventType(eventType)
                 .payload(payload)
                 .build();
-        outboxEventRepository.save(java.util.Objects.requireNonNull(event, "Event cannot be null"));
+        outboxEventRepository.save(event);
     }
 
     public TransferResponse toResponse(Transfer transfer) {
