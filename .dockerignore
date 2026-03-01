@@ -1,0 +1,50 @@
+README.md
+
+# Env and secrets
+.env
+*.env
+*.pem
+*.pub
+*.key
+
+# Build Artifacts
+target/
+build/
+bin/
+out/
+pom.xml.tag
+release.properties
+
+# IDE metadata
+.vscode/
+.idea/
+*.iml
+.eclipse/
+.classpath
+.project
+.settings/
+*.ipr
+*.iws
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Docker
+Dockerfile
+.dockerignore
+docker-compose.yml
+docker-compose.yaml
+
+# Git
+.git/
+.gitignore
+
+# Logs
+*.log
+logs/
+
+# Test output
+**/surefire-reports/
+**/failsafe-reports/
