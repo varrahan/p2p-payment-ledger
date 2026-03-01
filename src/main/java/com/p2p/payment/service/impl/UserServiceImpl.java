@@ -43,7 +43,7 @@ public class UserServiceImpl implements UserService {
                 .fullName(request.getFullName())
                 .build();
 
-        userRepository.save(user);
+        userRepository.save(java.util.Objects.requireNonNull(user, "User cannot be null"));
         log.info("Registered new user id={}", user.getId());
 
         String token = jwtService.generateToken(user.getId(), user.getEmail());
@@ -65,7 +65,7 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional(readOnly = true)
     public UserResponse getById(UUID id) {
-        var user = userRepository.findById(id)
+        var user = userRepository.findById(java.util.Objects.requireNonNull(id, "ID cannot be null"))
                 .orElseThrow(() -> new ResourceNotFoundException("User not found: " + id));
         return toResponse(user);
     }
