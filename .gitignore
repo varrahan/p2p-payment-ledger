@@ -1,11 +1,17 @@
-# Secrets — NEVER commit
+# Secrets
 .env
 *.env
-private.key
-public.key
+*.pem
+*.pub
+*.key
 
 # Maven
 target/
+build/
+bin/
+out/
+pom.xml.tag
+release.properties
 *.jar
 *.war
 
