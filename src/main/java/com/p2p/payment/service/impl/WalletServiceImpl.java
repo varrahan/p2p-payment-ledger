@@ -37,7 +37,7 @@ public class WalletServiceImpl implements WalletService {
     @Override
     @Transactional
     public WalletResponse createWallet(UUID userId, String currency) {
-        var user = userRepository.findById(userId)
+        var user = userRepository.findById(java.util.Objects.requireNonNull(userId, "User ID cannot be null"))
                 .orElseThrow(() -> new ResourceNotFoundException("User not found: " + userId));
 
         var wallet = Wallet.builder()
@@ -45,7 +45,7 @@ public class WalletServiceImpl implements WalletService {
                 .currency(currency)
                 .build();
 
-        walletRepository.save(wallet);
+        walletRepository.save(java.util.Objects.requireNonNull(wallet, "Wallet cannot be null"));
         log.info("Created wallet id={} for user id={}", wallet.getId(), userId);
         return toResponse(wallet);
     }
@@ -55,12 +55,12 @@ public class WalletServiceImpl implements WalletService {
     public WalletResponse deposit(UUID walletId, UUID authenticatedUserId,
                                    String idempotencyKey, DepositRequest request) {
         // --- Idempotency check ---
-        var existingKey = idempotencyKeyRepository.findById(idempotencyKey);
+        var existingKey = idempotencyKeyRepository.findById(java.util.Objects.requireNonNull(idempotencyKey, "Idempotency key cannot be null"));
         if (existingKey.isPresent()) {
             var ik = existingKey.get();
             if (ik.getStatus() == IdempotencyStatus.COMPLETED) {
                 // Return current wallet state — deposit already applied
-                var wallet = walletRepository.findById(walletId)
+                var wallet = walletRepository.findById(java.util.Objects.requireNonNull(walletId, "Wallet ID cannot be null"))
                         .orElseThrow(() -> new ResourceNotFoundException("Wallet not found: " + walletId));
                 return toResponse(wallet);
             }
@@ -75,7 +75,7 @@ public class WalletServiceImpl implements WalletService {
                 .status(IdempotencyStatus.PROCESSING)
                 .expiresAt(OffsetDateTime.now().plusHours(idempotencyTtlHours))
                 .build();
-        idempotencyKeyRepository.save(ik);
+        idempotencyKeyRepository.save(java.util.Objects.requireNonNull(ik, "Idempotency key cannot be null"));
 
         // Acquire pessimistic lock on wallet
         var wallet = walletRepository.findByIdWithLock(walletId)
@@ -102,7 +102,7 @@ public class WalletServiceImpl implements WalletService {
                 .idempotencyKey(idempotencyKey)
                 .description("External deposit")
                 .build();
-        transferRepository.save(depositTransfer);
+        transferRepository.save(java.util.Objects.requireNonNull(depositTransfer, "Deposit transfer cannot be null"));
 
         // Credit ledger entry
         var creditEntry = LedgerEntry.builder()
@@ -112,7 +112,7 @@ public class WalletServiceImpl implements WalletService {
                 .amount(request.getAmount())
                 .currency(request.getCurrency())
                 .build();
-        ledgerEntryRepository.save(creditEntry);
+        ledgerEntryRepository.save(java.util.Objects.requireNonNull(creditEntry, "Credit entry cannot be null"));
 
         // Update materialized balance — SAME transaction
         wallet.setCurrentBalance(wallet.getCurrentBalance().add(request.getAmount()));
@@ -123,7 +123,7 @@ public class WalletServiceImpl implements WalletService {
                 .eventType("DepositCompletedEvent")
                 .payload("{\"walletId\":\"" + walletId + "\",\"amount\":\"" + request.getAmount() + "\"}")
                 .build();
-        outboxEventRepository.save(outboxEvent);
+        outboxEventRepository.save(java.util.Objects.requireNonNull(outboxEvent, "Outbox event cannot be null"));
 
         // Mark idempotency key COMPLETED
         ik.setStatus(IdempotencyStatus.COMPLETED);
@@ -136,7 +136,7 @@ public class WalletServiceImpl implements WalletService {
     @Override
     @Transactional(readOnly = true)
     public WalletResponse getWallet(UUID walletId, UUID authenticatedUserId) {
-        var wallet = walletRepository.findById(walletId)
+        var wallet = walletRepository.findById(java.util.Objects.requireNonNull(walletId, "Wallet ID cannot be null"))
                 .orElseThrow(() -> new ResourceNotFoundException("Wallet not found: " + walletId));
 
         if (!wallet.getUser().getId().equals(authenticatedUserId)) {
