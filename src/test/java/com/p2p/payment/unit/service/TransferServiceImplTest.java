@@ -70,7 +70,6 @@ class TransferServiceImplTest {
     }
 
     @Test
-    @SuppressWarnings("null")
     @DisplayName("Throws TransferException when sender and receiver wallets are identical")
     void transfer_sameWallet_throwsException() {
         var request = buildRequest(aliceWallet.getId(), aliceWallet.getId(), "10.00");
@@ -82,7 +81,6 @@ class TransferServiceImplTest {
     }
 
     @Test
-    @SuppressWarnings("null")
     @DisplayName("Throws InsufficientFundsException when balance is too low")
     void transfer_insufficientFunds_throwsException() {
         var request = buildRequest(aliceWallet.getId(), bobWallet.getId(), "9999.00");
@@ -97,7 +95,6 @@ class TransferServiceImplTest {
     }
 
     @Test
-    @SuppressWarnings("null")
     @DisplayName("Throws TransferException when authenticated user does not own sender wallet")
     void transfer_unauthorizedSender_throwsException() {
         UUID impostor = UUID.randomUUID();
@@ -130,7 +127,6 @@ class TransferServiceImplTest {
     }
 
     @Test
-    @SuppressWarnings("null")
     @DisplayName("Throws TransferException when currency mismatches sender wallet")
     void transfer_currencyMismatch_throwsException() {
         aliceWallet = Wallet.builder()
