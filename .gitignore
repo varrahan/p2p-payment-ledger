@@ -4,6 +4,7 @@
 *.pem
 *.pub
 *.key
+firebase-service-account.json
 
 # Maven
 target/
