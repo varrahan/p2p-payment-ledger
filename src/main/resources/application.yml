@@ -20,10 +20,10 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
-        format_sql: false
+        "[format_sql]": false
         jdbc:
           lob:
-            non_contextual_creation: true
+            "[non_contextual_creation]": true
     open-in-view: false
 
   flyway:
@@ -51,15 +51,15 @@ spring:
       acks: all
       retries: 3
       properties:
-        enable.idempotence: true
-        max.in.flight.requests.per.connection: 1
+        "[enable.idempotence]": true
+        "[max.in.flight.requests.per.connection]": 1
     consumer:
       group-id: ${KAFKA_CONSUMER_GROUP:p2p-payment-group}
       auto-offset-reset: earliest
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
       properties:
-        spring.json.trusted.packages: "com.p2p.payment.dto"
+        "[spring.json.trusted.packages]": "com.p2p.payment.dto"
 
   jackson:
     serialization:
@@ -75,9 +75,9 @@ server:
 
 logging:
   level:
-    com.p2p.payment: ${LOG_LEVEL:INFO}
-    org.springframework.security: WARN
-    org.hibernate.SQL: WARN
+    "[com.p2p.payment]": ${LOG_LEVEL:INFO}
+    "[org.springframework.security]": WARN
+    "[org.hibernate.SQL]": WARN
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
 
@@ -92,7 +92,21 @@ app:
   kafka:
     topics:
       transfer-completed: transfer-completed
-      transfer-reversed: transfer-reversed
+      transfer-reversed:  transfer-reversed
+      deposit-confirmed:  deposit-confirmed
+      login-new-ip:       login-new-ip
+      password-changed:   password-changed
+      large-withdrawal:   large-withdrawal
+      monthly-statement:  monthly-statement
+      tos-update:         tos-update
+  notifications:
+    sendgrid:
+      api-key:    ${SENDGRID_API_KEY}
+      from-email: ${SENDGRID_FROM_EMAIL}
+      from-name:  ${SENDGRID_FROM_NAME:P2P Payments}
+    firebase:
+      credentials-path: ${FIREBASE_CREDENTIALS_PATH:firebase-service-account.json}
+    large-withdrawal-threshold: ${LARGE_WITHDRAWAL_THRESHOLD:1000}
 
 management:
   endpoints:
@@ -102,10 +116,3 @@ management:
   endpoint:
     health:
       show-details: when-authorized
-      probes:
-        enabled: true
-  health:
-    livenessState:
-      enabled: true
-    readinessState:
-      enabled: true
