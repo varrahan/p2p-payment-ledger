@@ -186,3 +186,53 @@ sudo apt install temurin-21-jdk
 **Windows:** Download the `.msi` from [adoptium.net](https://adoptium.net) — check "Set JAVA_HOME" during install.
 
 ---
+
+## Setup & Running
+
+### 1. Clone and configure
+
+```bash
+git clone 
+cd p2p-payment-ledger
+cp .env.example .env
+```
+
+Open `.env` and fill in the required values — at minimum:
+- `DB_PASSWORD` — any strong password
+- `JWT_SECRET` — minimum 32 characters
+- `SENDGRID_API_KEY` — from your SendGrid dashboard
+- `SENDGRID_FROM_EMAIL` — a verified sender address in SendGrid
+- `FIREBASE_CREDENTIALS_PATH` — path to your Firebase service account JSON (see below)
+
+### 2. Set up Firebase
+
+1. Go to [console.firebase.google.com](https://console.firebase.google.com)
+2. Create a project (or use an existing one)
+3. Go to **Project Settings → Service Accounts → Generate New Private Key**
+4. Save the downloaded JSON file as `src/main/resources/firebase-service-account.json`
+5. Confirm it is listed in `.gitignore` — **this file must never be committed**
+
+### 3. Start everything
+
+```bash
+docker compose up --build
+```
+
+First run downloads images and builds the JAR — allow 5–10 minutes. Subsequent runs start in under 30 seconds.
+
+### 4. Verify
+
+```bash
+curl http://localhost:8080/actuator/health
+# {"status":"UP"}
+```
+
+### Running infrastructure only (for local development)
+
+```bash
+# Start PostgreSQL, Redis, and Kafka only
+docker compose up postgres redis zookeeper kafka -d
+
+# Run the app with Maven (hot reload)
+mvn spring-boot:run
+```
