@@ -161,6 +161,74 @@ Each notification type is routed to the channel that serves its purpose — not 
 
 ---
 
+## Project Structure
+
+```
+p2p-payment-ledger/
+├── .dockerignore
+├── .env.example                          # Template — copy to .env
+├── .gitignore
+├── Dockerfile                            # Multi-stage build, non-root user
+├── docker-compose.yml                    # PostgreSQL, Redis, Zookeeper, Kafka, App
+├── pom.xml
+└── src/
+    ├── main/
+    │   ├── java/com/p2p/payment/
+    │   │   ├── PaymentLedgerApplication.java
+    │   │   ├── config/
+    │   │   │   ├── FirebaseConfig.java   # Firebase Admin SDK initialisation
+    │   │   │   ├── KafkaConfig.java      # Topic definitions (8 topics)
+    │   │   │   └── SecurityConfig.java   # JWT filter chain, BCrypt
+    │   │   ├── controller/
+    │   │   │   ├── AuthController.java   # register, login, change-password
+    │   │   │   ├── DeviceTokenController.java  # FCM token register/deregister
+    │   │   │   ├── TransferController.java
+    │   │   │   └── WalletController.java
+    │   │   ├── domain/
+    │   │   │   ├── entity/              # User, Wallet, Transfer, LedgerEntry,
+    │   │   │   │                        # IdempotencyKey, OutboxEvent, DeviceToken
+    │   │   │   └── enums/               # TransferStatus, LedgerEntryType,
+    │   │   │                            # IdempotencyStatus
+    │   │   ├── dto/
+    │   │   │   ├── request/             # Input DTOs with Bean Validation
+    │   │   │   └── response/            # Output DTOs
+    │   │   ├── exception/               # Custom exceptions + GlobalExceptionHandler
+    │   │   ├── notification/
+    │   │   │   ├── dto/                 # NotificationEvent, NotificationEventType
+    │   │   │   └── service/             # EmailService, PushNotificationService,
+    │   │   │                            # NotificationPublisher
+    │   │   ├── repository/              # Spring Data JPA repositories (7 total)
+    │   │   ├── scheduler/               # OutboxRelayScheduler (polls every 1s)
+    │   │   ├── security/                # JwtService, JwtAuthenticationFilter,
+    │   │   │                            # UserDetailsServiceImpl, UserPrincipal,
+    │   │   │                            # SecurityUtils
+    │   │   └── service/
+    │   │       ├── NotificationConsumer.java  # Kafka consumer — channel routing
+    │   │       ├── RateLimitService.java
+    │   │       ├── TransferService.java
+    │   │       ├── UserService.java
+    │   │       ├── WalletService.java
+    │   │       └── impl/               # TransferServiceImpl, UserServiceImpl,
+    │   │                               # WalletServiceImpl
+    │   └── resources/
+    │       ├── application.yml          # All config — secrets via env vars
+    │       ├── application-prod.yml     # Production overrides (JSON logging, pools)
+    │       └── db/migration/
+    │           ├── V1__core_schema.sql  # Core tables, indexes, triggers
+    │           └── V2__device_tokens.sql  # FCM device token storage
+    └── test/
+        ├── java/com/p2p/payment/
+        │   ├── integration/
+        │   │   ├── BaseIntegrationTest.java    # Testcontainers setup
+        │   │   └── TransferIntegrationTest.java
+        │   └── unit/service/
+        │       └── TransferServiceImplTest.java
+        └── resources/
+            └── application.yml          # Test-specific config overrides
+```
+
+---
+
 ## Prerequisites
 
 | Requirement | Version | Notes |
