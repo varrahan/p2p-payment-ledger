@@ -387,3 +387,13 @@ curl -X POST http://localhost:8080/api/v1/devices/register \
 ```
 
 ---
+
+### Health
+
+| Method | Endpoint | Auth | Description |
+|---|---|---|---|
+| GET | `/actuator/health` | No | Overall application health |
+| GET | `/actuator/health/liveness` | No | Is the process alive? |
+| GET | `/actuator/health/readiness` | No | Is the app ready to serve traffic? |
+
+---
