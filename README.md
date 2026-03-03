@@ -236,3 +236,12 @@ docker compose up postgres redis zookeeper kafka -d
 # Run the app with Maven (hot reload)
 mvn spring-boot:run
 ```
+
+### Stopping
+
+```bash
+docker compose down          # Stop containers, keep data
+docker compose down -v       # Stop containers, wipe all data (clean slate)
+```
+
+---
