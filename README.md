@@ -397,3 +397,7 @@ curl -X POST http://localhost:8080/api/v1/devices/register \
 | GET | `/actuator/health/readiness` | No | Is the app ready to serve traffic? |
 
 ---
+
+## Notification System
+
+Notifications are delivered via the Transactional Outbox pattern — they are written to the database as part of the same transaction as the triggering operation, then relayed to Kafka asynchronously. This guarantees no notification is lost even if Kafka is temporarily unavailable.
