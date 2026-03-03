@@ -429,3 +429,21 @@ Notifications are delivered via the Transactional Outbox pattern — they are wr
 4. Add `firebase-service-account.json` to `.gitignore` immediately
 
 ---
+
+## Running Tests
+
+Docker must be running — Testcontainers spins up real PostgreSQL, Redis, and Kafka containers.
+
+```bash
+# Full test suite (unit + integration)
+mvn test
+
+# Unit tests only — no Docker required, runs in seconds
+mvn test -Dtest="TransferServiceImplTest"
+
+# Integration tests only
+mvn test -Dtest="TransferIntegrationTest"
+
+# Verbose output — see each test result as it runs
+mvn test -Dsurefire.useFile=false
+```
