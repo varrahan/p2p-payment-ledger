@@ -578,3 +578,17 @@ mvn flyway:migrate -Dflyway.url=jdbc:postgresql://:5432/p2p_ledger
 | Secrets | `.env` file → AWS Secrets Manager |
 
 ---
+
+## Security
+
+- All secrets are environment variables — nothing sensitive in source code
+- Passwords are BCrypt-hashed with cost factor 12
+- JWT tokens are stateless and validated on every request (HS256, configurable expiry)
+- Authorization is enforced in the service layer — users can only act on wallets they own
+- Error responses never expose stack traces or internal details
+- SQL injection is prevented throughout by JPA parameterised queries
+- New-IP login detection triggers immediate Push + Email security alert
+- Large withdrawals (above configurable threshold) trigger Push + Email security alert
+- Password changes trigger Push + Email security alert
+- FCM tokens are automatically deactivated when Firebase reports them as invalid
+- Firebase service account JSON must never be committed — enforced via `.gitignore`
