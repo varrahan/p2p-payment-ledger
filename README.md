@@ -121,3 +121,42 @@ All 14 steps commit in a single database transaction or roll back together:
 12. Mark transfer `COMPLETED`
 13. Write `OutboxEvent` (Transactional Outbox)
 14. Mark idempotency key `COMPLETED`
+
+---
+
+## Key Engineering Decisions
+
+### 1. Double-Entry Ledger
+Every transfer writes exactly two `ledger_entries` rows — a DEBIT for the sender and a CREDIT for the receiver. The ledger is append-only and immutable. The reconciliation endpoint verifies `SUM(debits) == SUM(credits)` at any time.
+
+### 2. Materialized Balance
+`wallets.current_balance` is maintained as a fast, queryable balance. It is always updated **within the same transaction** as the corresponding ledger inserts — never separately. If a discrepancy is ever detected, the ledger is the source of truth.
+
+### 3. Pessimistic Locking
+Both wallet rows are locked with `SELECT ... FOR UPDATE` at the start of every transfer. Locks are always acquired in **ascending wallet UUID order** to prevent deadlocks when two concurrent transfers involve the same pair of wallets.
+
+### 4. Idempotency
+Every mutating endpoint requires an `Idempotency-Key` header. Keys are stored durably in PostgreSQL and committed in the same transaction as the transfer — not just in Redis. Duplicate requests return the original response with no side effects.
+
+### 5. Transactional Outbox
+Kafka events are never published directly from within a transaction. Instead, an `outbox_events` row is written as part of the same transaction. The `OutboxRelayScheduler` polls every second and publishes unpublished rows to Kafka. This eliminates the dual-write problem: if Kafka is unavailable, the event is not lost — it will be delivered when Kafka recovers.
+
+### 6. Transfer State Machine
+```
+PENDING → PROCESSING → COMPLETED → REVERSED
+                     ↘ FAILED
+```
+
+### 7. Reversals via Offsetting Entries
+Reversals create new ledger entries that offset the original ones. Original records are never modified or deleted, preserving a complete, immutable audit trail — a requirement in most financial regulatory frameworks.
+
+### 8. Notification Channel Strategy
+Each notification type is routed to the channel that serves its purpose — not just the most visible channel:
+
+| Category | Channel | Reason |
+|---|---|---|
+| Security (new IP, password change, large withdrawal) | Push + Email | Immediate alert + permanent security trail |
+| Transactional (transfer received, deposit confirmed) | Push only | Fast UX confirmation, no legal requirement for email |
+| Compliance (monthly statement, ToS update) | Email only | "Durable medium" requirement under PSD2 / MiFID II |
+
+---
