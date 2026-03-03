@@ -187,6 +187,33 @@ sudo apt install temurin-21-jdk
 
 ---
 
+## Configuration Reference
+
+All configuration is driven by environment variables.
+
+| Variable | Default | Description |
+|---|---|---|
+| `DB_URL` | `jdbc:postgresql://localhost:5432/p2p_ledger` | PostgreSQL connection URL |
+| `DB_USERNAME` | `p2p_user` | Database username |
+| `DB_PASSWORD` | — | **Required.** Database password |
+| `REDIS_HOST` | `localhost` | Redis hostname |
+| `REDIS_PORT` | `6379` | Redis port |
+| `REDIS_PASSWORD` | _(empty)_ | Redis password if auth enabled |
+| `KAFKA_BOOTSTRAP_SERVERS` | `localhost:9092` | Kafka broker address |
+| `JWT_SECRET` | — | **Required.** Minimum 32 characters |
+| `JWT_EXPIRATION_MS` | `86400000` | Token lifetime (default: 24 hours) |
+| `SENDGRID_API_KEY` | — | **Required.** SendGrid API key |
+| `SENDGRID_FROM_EMAIL` | — | **Required.** Verified sender address |
+| `SENDGRID_FROM_NAME` | `P2P Payments` | Display name in email From field |
+| `FIREBASE_CREDENTIALS_PATH` | `firebase-service-account.json` | Path to Firebase service account JSON |
+| `LARGE_WITHDRAWAL_THRESHOLD` | `1000` | Amount above which a withdrawal triggers a security alert |
+| `RATE_LIMIT_TRANSFERS_PER_MINUTE` | `10` | Max transfers per user per minute |
+| `IDEMPOTENCY_TTL_HOURS` | `24` | How long idempotency keys are retained |
+| `SERVER_PORT` | `8080` | HTTP port |
+| `LOG_LEVEL` | `INFO` | Application log level |
+
+---
+
 ## Setup & Running
 
 ### 1. Clone and configure
