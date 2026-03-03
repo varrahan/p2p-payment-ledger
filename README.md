@@ -447,3 +447,20 @@ mvn test -Dtest="TransferIntegrationTest"
 # Verbose output — see each test result as it runs
 mvn test -Dsurefire.useFile=false
 ```
+
+### Test coverage
+
+| Test | Type | What it verifies |
+|---|---|---|
+| Happy path transfer | Integration | Correct ledger entries, balance updates, outbox event written |
+| Idempotency | Integration | Duplicate key returns same result, no double-debit |
+| Insufficient funds | Integration | Exception thrown, balances and ledger unchanged |
+| Concurrency (20 threads) | Integration | No overdraft, final balance mathematically exact |
+| Reconciliation | Integration | `SUM(debits) == SUM(credits)` after N transfers |
+| Reversal | Integration | Offsetting entries created, status = `REVERSED` |
+| Currency mismatch | Unit | Exception thrown before any DB write |
+| Unauthorized sender | Unit | Exception when user does not own sender wallet |
+| Same-wallet transfer | Unit | Exception thrown immediately |
+| Processing key conflict | Unit | `409` returned for in-flight duplicate |
+
+---
