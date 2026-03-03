@@ -532,3 +532,49 @@ mvn test -Dsurefire.useFile=false
 | Processing key conflict | Unit | `409` returned for in-flight duplicate |
 
 ---
+
+## Cloud Deployment
+
+The application is designed for cloud deployment with minimal changes. Config is fully environment-variable driven — no code changes required to point at managed cloud services.
+
+### Recommended AWS architecture
+
+```
+Internet → ALB → ECS Fargate (this app) → RDS PostgreSQL
+                                        → ElastiCache Redis
+                                        → MSK Kafka
+```
+
+### Steps
+
+1. **Push image to ECR:**
+```bash
+docker build -t p2p-payment-ledger .
+docker tag p2p-payment-ledger:latest .dkr.ecr..amazonaws.com/p2p-payment-ledger:latest
+docker push .dkr.ecr..amazonaws.com/p2p-payment-ledger:latest
+```
+
+2. **Store secrets in AWS Secrets Manager:**
+```bash
+aws secretsmanager create-secret \
+  --name /p2p-payment/prod \
+  --secret-string '{"DB_PASSWORD":"...","JWT_SECRET":"..."}'
+```
+
+3. **Set `SPRING_PROFILES_ACTIVE=prod`** in the ECS task definition to activate `application-prod.yml` — this enables JSON logging, larger connection pools, and Secrets Manager import.
+
+4. **Run Flyway migrations** against RDS before first deploy:
+```bash
+mvn flyway:migrate -Dflyway.url=jdbc:postgresql://:5432/p2p_ledger
+```
+
+### What changes for production
+
+| File | Change |
+|---|---|
+| `application-prod.yml` | Already present — activates via `SPRING_PROFILES_ACTIVE=prod` |
+| `docker-compose.yml` | Not used in production — replaced by ECS task definitions |
+| Infrastructure | PostgreSQL → RDS, Redis → ElastiCache, Kafka → MSK |
+| Secrets | `.env` file → AWS Secrets Manager |
+
+---
