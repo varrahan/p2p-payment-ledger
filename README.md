@@ -311,3 +311,29 @@ curl -X POST http://localhost:8080/api/v1/auth/change-password \
 ```
 
 ---
+
+### Wallets
+
+| Method | Endpoint | Description |
+|---|---|---|
+| POST | `/api/v1/wallets?currency=USD` | Create a wallet |
+| GET | `/api/v1/wallets/my` | List all your wallets |
+| GET | `/api/v1/wallets/{walletId}` | Get a specific wallet |
+| POST | `/api/v1/wallets/{walletId}/deposit` | Deposit funds (**Idempotency-Key required**) |
+
+**Create wallet:**
+```bash
+curl -X POST "http://localhost:8080/api/v1/wallets?currency=USD" \
+  -H "Authorization: Bearer "
+```
+
+**Deposit:**
+```bash
+curl -X POST http://localhost:8080/api/v1/wallets//deposit \
+  -H "Authorization: Bearer " \
+  -H "Idempotency-Key: deposit-001" \
+  -H "Content-Type: application/json" \
+  -d '{"amount":"500.00","currency":"USD"}'
+```
+
+---
