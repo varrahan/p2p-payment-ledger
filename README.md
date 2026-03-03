@@ -370,3 +370,20 @@ curl "http://localhost:8080/api/v1/transfers/wallet/?page=0&size=20" \
 ```
 
 ---
+
+### Device Tokens (Push Notifications)
+
+| Method | Endpoint | Description |
+|---|---|---|
+| POST | `/api/v1/devices/register` | Register a device for push notifications |
+| DELETE | `/api/v1/devices/deregister` | Deregister a device (on logout) |
+
+**Register device:**
+```bash
+curl -X POST http://localhost:8080/api/v1/devices/register \
+  -H "Authorization: Bearer " \
+  -H "Content-Type: application/json" \
+  -d '{"token":"","deviceType":"IOS"}'
+```
+
+---
