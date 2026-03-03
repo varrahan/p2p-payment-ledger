@@ -272,3 +272,42 @@ docker compose down -v       # Stop containers, wipe all data (clean slate)
 ```
 
 ---
+
+## API Reference
+
+All endpoints (except auth and health) require:
+```
+Authorization: Bearer <token>
+```
+
+### Authentication
+
+| Method | Endpoint | Description |
+|---|---|---|
+| POST | `/api/v1/auth/register` | Register a new user |
+| POST | `/api/v1/auth/login` | Login and receive a JWT |
+| POST | `/api/v1/auth/change-password` | Change password (triggers security notification) |
+
+**Register:**
+```bash
+curl -X POST http://localhost:8080/api/v1/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"email":"alice@example.com","password":"password123","fullName":"Alice Smith"}'
+```
+
+**Login:**
+```bash
+curl -X POST http://localhost:8080/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"alice@example.com","password":"password123"}'
+```
+
+**Change password:**
+```bash
+curl -X POST http://localhost:8080/api/v1/auth/change-password \
+  -H "Authorization: Bearer " \
+  -H "Content-Type: application/json" \
+  -d '{"currentPassword":"password123","newPassword":"newSecurePass456"}'
+```
+
+---
