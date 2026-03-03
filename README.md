@@ -401,3 +401,31 @@ curl -X POST http://localhost:8080/api/v1/devices/register \
 ## Notification System
 
 Notifications are delivered via the Transactional Outbox pattern — they are written to the database as part of the same transaction as the triggering operation, then relayed to Kafka asynchronously. This guarantees no notification is lost even if Kafka is temporarily unavailable.
+
+### Events and triggers
+
+| Event | Triggered by | Channel |
+|---|---|---|
+| `LOGIN_NEW_IP` | Login from an IP not seen in 30 days | Push + Email |
+| `PASSWORD_CHANGED` | Successful password change | Push + Email |
+| `LARGE_WITHDRAWAL` | Transfer exceeds `LARGE_WITHDRAWAL_THRESHOLD` | Push + Email |
+| `TRANSFER_RECEIVED` | Transfer completed (receiver) | Push |
+| `DEPOSIT_CONFIRMED` | Deposit completed | Push |
+| `MONTHLY_STATEMENT` | Published by compliance scheduler | Email |
+| `TOS_UPDATE` | Published on Terms of Service change | Email |
+
+### External service setup
+
+**SendGrid:**
+1. Create a free account at [sendgrid.com](https://sendgrid.com)
+2. Verify a sender email address under Settings → Sender Authentication
+3. Create an API key under Settings → API Keys with "Mail Send" permission
+4. Add `SENDGRID_API_KEY` and `SENDGRID_FROM_EMAIL` to your `.env`
+
+**Firebase FCM:**
+1. Create a project at [console.firebase.google.com](https://console.firebase.google.com)
+2. Project Settings → Service Accounts → Generate New Private Key
+3. Save as `src/main/resources/firebase-service-account.json`
+4. Add `firebase-service-account.json` to `.gitignore` immediately
+
+---
