@@ -337,3 +337,36 @@ curl -X POST http://localhost:8080/api/v1/wallets//deposit \
 ```
 
 ---
+
+### Transfers
+
+| Method | Endpoint | Description |
+|---|---|---|
+| POST | `/api/v1/transfers` | Send money (**Idempotency-Key required**) |
+| GET | `/api/v1/transfers/{transferId}` | Get transfer details |
+| GET | `/api/v1/transfers/wallet/{walletId}` | Transfer history for a wallet |
+| POST | `/api/v1/transfers/{transferId}/reverse` | Reverse a transfer (**Idempotency-Key required**) |
+| GET | `/api/v1/transfers/reconcile` | Verify ledger balance (SUM debits == SUM credits) |
+
+**Send money:**
+```bash
+curl -X POST http://localhost:8080/api/v1/transfers \
+  -H "Authorization: Bearer " \
+  -H "Idempotency-Key: transfer-001" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "senderWalletId": "",
+    "receiverWalletId": "",
+    "amount": "100.00",
+    "currency": "USD",
+    "description": "Dinner split"
+  }'
+```
+
+**Transfer history (paginated):**
+```bash
+curl "http://localhost:8080/api/v1/transfers/wallet/?page=0&size=20" \
+  -H "Authorization: Bearer "
+```
+
+---
