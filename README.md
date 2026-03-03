@@ -102,3 +102,22 @@ A Person-to-Person payment backend built with Java 21 and Spring Boot 3. Demonst
       │   (Email)     │ │   (Push)      │
       └───────────────┘ └───────────────┘
 ```
+
+### Transfer Flow (14 atomic steps)
+
+All 14 steps commit in a single database transaction or roll back together:
+
+1. Rate limit check (Redis token bucket)
+2. Idempotency check (PostgreSQL)
+3. Mark idempotency key `PROCESSING`
+4. Acquire pessimistic locks (`SELECT FOR UPDATE`, ascending ID order)
+5. Authorisation check (authenticated user owns sender wallet)
+6. Currency validation (sender, receiver, and request all match)
+7. Sufficient funds check
+8. Create `Transfer` record (`status = PROCESSING`)
+9. Insert `DEBIT` ledger entry (sender)
+10. Insert `CREDIT` ledger entry (receiver)
+11. Update materialized balances (both wallets)
+12. Mark transfer `COMPLETED`
+13. Write `OutboxEvent` (Transactional Outbox)
+14. Mark idempotency key `COMPLETED`
