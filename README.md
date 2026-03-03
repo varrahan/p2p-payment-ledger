@@ -103,7 +103,7 @@ A Person-to-Person payment backend built with Java 21 and Spring Boot 3. Demonst
       └───────────────┘ └───────────────┘
 ```
 
-### Transfer Flow (14 atomic steps)
+### Transfer Flow 
 
 All 14 steps commit in a single database transaction or roll back together:
 
