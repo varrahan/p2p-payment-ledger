@@ -22,3 +22,19 @@ A Person-to-Person payment backend built with Java 21 and Spring Boot 3. Demonst
 - [Security](#security)
 
 ---
+
+## Tech Stack
+
+| Layer | Technology | Purpose |
+|---|---|---|
+| Language & Framework | Java 21 + Spring Boot 3.2 | Application runtime |
+| Database | PostgreSQL 16 | ACID ledger, pessimistic locking, Flyway migrations |
+| Cache & Rate Limiting | Redis 7 | Token bucket rate limiting, new-IP login tracking |
+| Event Streaming | Apache Kafka | Transactional Outbox relay, notification routing |
+| Email | SendGrid | Transactional email — security alerts, compliance |
+| Push Notifications | Firebase FCM | In-app push — transfers, deposits, security alerts |
+| Security | Spring Security + JWT (HS256) | Stateless authentication, BCrypt password hashing |
+| Testing | JUnit 5 + Mockito + Testcontainers | Unit and integration tests against real infrastructure |
+| Infrastructure | Docker + Docker Compose | Local development and containerised deployment |
+
+---
