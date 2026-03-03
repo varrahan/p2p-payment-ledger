@@ -2,7 +2,7 @@
 
 A Person-to-Person payment backend built with Java 21 and Spring Boot 3. Demonstrates the core engineering principles required in real fintech systems: double-entry accounting, concurrency control, idempotency, event-driven notifications, and regulatory compliance patterns.
 
-> **"P2P" means Person-to-Person** — describing the relationship between parties in a transaction (people sending money to people, as opposed to business payments). Like Venmo, Revolut, or Wise, this system is intentionally centralised: a trusted intermediary holding a shared ledger is what makes payments auditable, reversible, and legally operable. A truly decentralised architecture (blockchain) cannot satisfy KYC/AML/dispute-resolution requirements in most jurisdictions.
+> **"P2P" means Person-to-Person** - describing the relationship between parties in a transaction (people sending money to people, as opposed to business payments). Like Venmo, Revolut, or Wise, this system is intentionally centralised: a trusted intermediary holding a shared ledger is what makes payments auditable, reversible, and legally operable. A truly decentralised architecture (blockchain) cannot satisfy KYC/AML/dispute-resolution requirements in most jurisdictions.
 
 ---
 
@@ -31,8 +31,8 @@ A Person-to-Person payment backend built with Java 21 and Spring Boot 3. Demonst
 | Database | PostgreSQL 16 | ACID ledger, pessimistic locking, Flyway migrations |
 | Cache & Rate Limiting | Redis 7 | Token bucket rate limiting, new-IP login tracking |
 | Event Streaming | Apache Kafka | Transactional Outbox relay, notification routing |
-| Email | SendGrid | Transactional email — security alerts, compliance |
-| Push Notifications | Firebase FCM | In-app push — transfers, deposits, security alerts |
+| Email | SendGrid | Transactional email - security alerts, compliance |
+| Push Notifications | Firebase FCM | In-app push - transfers, deposits, security alerts |
 | Security | Spring Security + JWT (HS256) | Stateless authentication, BCrypt password hashing |
 | Testing | JUnit 5 + Mockito + Testcontainers | Unit and integration tests against real infrastructure |
 | Infrastructure | Docker + Docker Compose | Local development and containerised deployment |
@@ -55,7 +55,7 @@ A Person-to-Person payment backend built with Java 21 and Spring Boot 3. Demonst
 │  1. Checks idempotency key (PostgreSQL)             │
 │  2. Acquires pessimistic locks (ascending ID order) │
 │  3. Writes ledger entries + updates balance         │  
-│  4. Writes outbox event — all in ONE transaction    │
+│  4. Writes outbox event - all in ONE transaction    │
 └───────┬──────────────────────────┬──────────────────┘
         │                          │
 ┌───────▼───────┐        ┌─────────▼────────┐
@@ -127,19 +127,19 @@ All 14 steps commit in a single database transaction or roll back together:
 ## Key Engineering Decisions
 
 ### 1. Double-Entry Ledger
-Every transfer writes exactly two `ledger_entries` rows — a DEBIT for the sender and a CREDIT for the receiver. The ledger is append-only and immutable. The reconciliation endpoint verifies `SUM(debits) == SUM(credits)` at any time.
+Every transfer writes exactly two `ledger_entries` rows - a DEBIT for the sender and a CREDIT for the receiver. The ledger is append-only and immutable. The reconciliation endpoint verifies `SUM(debits) == SUM(credits)` at any time.
 
 ### 2. Materialized Balance
-`wallets.current_balance` is maintained as a fast, queryable balance. It is always updated **within the same transaction** as the corresponding ledger inserts — never separately. If a discrepancy is ever detected, the ledger is the source of truth.
+`wallets.current_balance` is maintained as a fast, queryable balance. It is always updated **within the same transaction** as the corresponding ledger inserts - never separately. If a discrepancy is ever detected, the ledger is the source of truth.
 
 ### 3. Pessimistic Locking
 Both wallet rows are locked with `SELECT ... FOR UPDATE` at the start of every transfer. Locks are always acquired in **ascending wallet UUID order** to prevent deadlocks when two concurrent transfers involve the same pair of wallets.
 
 ### 4. Idempotency
-Every mutating endpoint requires an `Idempotency-Key` header. Keys are stored durably in PostgreSQL and committed in the same transaction as the transfer — not just in Redis. Duplicate requests return the original response with no side effects.
+Every mutating endpoint requires an `Idempotency-Key` header. Keys are stored durably in PostgreSQL and committed in the same transaction as the transfer - not just in Redis. Duplicate requests return the original response with no side effects.
 
 ### 5. Transactional Outbox
-Kafka events are never published directly from within a transaction. Instead, an `outbox_events` row is written as part of the same transaction. The `OutboxRelayScheduler` polls every second and publishes unpublished rows to Kafka. This eliminates the dual-write problem: if Kafka is unavailable, the event is not lost — it will be delivered when Kafka recovers.
+Kafka events are never published directly from within a transaction. Instead, an `outbox_events` row is written as part of the same transaction. The `OutboxRelayScheduler` polls every second and publishes unpublished rows to Kafka. This eliminates the dual-write problem: if Kafka is unavailable, the event is not lost - it will be delivered when Kafka recovers.
 
 ### 6. Transfer State Machine
 ```
@@ -148,10 +148,10 @@ PENDING → PROCESSING → COMPLETED → REVERSED
 ```
 
 ### 7. Reversals via Offsetting Entries
-Reversals create new ledger entries that offset the original ones. Original records are never modified or deleted, preserving a complete, immutable audit trail — a requirement in most financial regulatory frameworks.
+Reversals create new ledger entries that offset the original ones. Original records are never modified or deleted, preserving a complete, immutable audit trail - a requirement in most financial regulatory frameworks.
 
 ### 8. Notification Channel Strategy
-Each notification type is routed to the channel that serves its purpose — not just the most visible channel:
+Each notification type is routed to the channel that serves its purpose - not just the most visible channel:
 
 | Category | Channel | Reason |
 |---|---|---|
@@ -166,7 +166,7 @@ Each notification type is routed to the channel that serves its purpose — not 
 ```
 p2p-payment-ledger/
 ├── .dockerignore
-├── .env.example                          # Template — copy to .env
+├── .env.example                          # Template - copy to .env
 ├── .gitignore
 ├── Dockerfile                            # Multi-stage build, non-root user
 ├── docker-compose.yml                    # PostgreSQL, Redis, Zookeeper, Kafka, App
@@ -203,7 +203,7 @@ p2p-payment-ledger/
     │   │   │                            # UserDetailsServiceImpl, UserPrincipal,
     │   │   │                            # SecurityUtils
     │   │   └── service/
-    │   │       ├── NotificationConsumer.java  # Kafka consumer — channel routing
+    │   │       ├── NotificationConsumer.java  # Kafka consumer - channel routing
     │   │       ├── RateLimitService.java
     │   │       ├── TransferService.java
     │   │       ├── UserService.java
@@ -211,7 +211,7 @@ p2p-payment-ledger/
     │   │       └── impl/               # TransferServiceImpl, UserServiceImpl,
     │   │                               # WalletServiceImpl
     │   └── resources/
-    │       ├── application.yml          # All config — secrets via env vars
+    │       ├── application.yml          # All config - secrets via env vars
     │       ├── application-prod.yml     # Production overrides (JSON logging, pools)
     │       └── db/migration/
     │           ├── V1__core_schema.sql  # Core tables, indexes, triggers
@@ -236,8 +236,8 @@ p2p-payment-ledger/
 | Docker Desktop | Latest | Required for all infrastructure |
 | Java JDK | 21 | Temurin recommended |
 | Maven | 3.x | For running tests locally |
-| SendGrid account | — | Free tier sufficient — [sendgrid.com](https://sendgrid.com) |
-| Firebase project | — | Free tier sufficient — [console.firebase.google.com](https://console.firebase.google.com) |
+| SendGrid account | - | Free tier sufficient - [sendgrid.com](https://sendgrid.com) |
+| Firebase project | - | Free tier sufficient - [console.firebase.google.com](https://console.firebase.google.com) |
 
 ### Install Java 21
 
@@ -251,7 +251,7 @@ brew install --cask temurin@21
 sudo apt install temurin-21-jdk
 ```
 
-**Windows:** Download the `.msi` from [adoptium.net](https://adoptium.net) — check "Set JAVA_HOME" during install.
+**Windows:** Download the `.msi` from [adoptium.net](https://adoptium.net) - check "Set JAVA_HOME" during install.
 
 ---
 
@@ -263,15 +263,15 @@ All configuration is driven by environment variables.
 |---|---|---|
 | `DB_URL` | `jdbc:postgresql://localhost:5432/p2p_ledger` | PostgreSQL connection URL |
 | `DB_USERNAME` | `p2p_user` | Database username |
-| `DB_PASSWORD` | — | **Required.** Database password |
+| `DB_PASSWORD` | - | **Required.** Database password |
 | `REDIS_HOST` | `localhost` | Redis hostname |
 | `REDIS_PORT` | `6379` | Redis port |
 | `REDIS_PASSWORD` | _(empty)_ | Redis password if auth enabled |
 | `KAFKA_BOOTSTRAP_SERVERS` | `localhost:9092` | Kafka broker address |
-| `JWT_SECRET` | — | **Required.** Minimum 32 characters |
+| `JWT_SECRET` | - | **Required.** Minimum 32 characters |
 | `JWT_EXPIRATION_MS` | `86400000` | Token lifetime (default: 24 hours) |
-| `SENDGRID_API_KEY` | — | **Required.** SendGrid API key |
-| `SENDGRID_FROM_EMAIL` | — | **Required.** Verified sender address |
+| `SENDGRID_API_KEY` | - | **Required.** SendGrid API key |
+| `SENDGRID_FROM_EMAIL` | - | **Required.** Verified sender address |
 | `SENDGRID_FROM_NAME` | `P2P Payments` | Display name in email From field |
 | `FIREBASE_CREDENTIALS_PATH` | `firebase-service-account.json` | Path to Firebase service account JSON |
 | `LARGE_WITHDRAWAL_THRESHOLD` | `1000` | Amount above which a withdrawal triggers a security alert |
@@ -292,12 +292,12 @@ cd p2p-payment-ledger
 cp .env.example .env
 ```
 
-Open `.env` and fill in the required values — at minimum:
-- `DB_PASSWORD` — any strong password
-- `JWT_SECRET` — minimum 32 characters
-- `SENDGRID_API_KEY` — from your SendGrid dashboard
-- `SENDGRID_FROM_EMAIL` — a verified sender address in SendGrid
-- `FIREBASE_CREDENTIALS_PATH` — path to your Firebase service account JSON (see below)
+Open `.env` and fill in the required values - at minimum:
+- `DB_PASSWORD` - any strong password
+- `JWT_SECRET` - minimum 32 characters
+- `SENDGRID_API_KEY` - from your SendGrid dashboard
+- `SENDGRID_FROM_EMAIL` - a verified sender address in SendGrid
+- `FIREBASE_CREDENTIALS_PATH` - path to your Firebase service account JSON (see below)
 
 ### 2. Set up Firebase
 
@@ -305,7 +305,7 @@ Open `.env` and fill in the required values — at minimum:
 2. Create a project (or use an existing one)
 3. Go to **Project Settings → Service Accounts → Generate New Private Key**
 4. Save the downloaded JSON file as `src/main/resources/firebase-service-account.json`
-5. Confirm it is listed in `.gitignore` — **this file must never be committed**
+5. Confirm it is listed in `.gitignore` - **this file must never be committed**
 
 ### 3. Start everything
 
@@ -313,7 +313,7 @@ Open `.env` and fill in the required values — at minimum:
 docker compose up --build
 ```
 
-First run downloads images and builds the JAR — allow 5–10 minutes. Subsequent runs start in under 30 seconds.
+First run downloads images and builds the JAR - allow 5–10 minutes. Subsequent runs start in under 30 seconds.
 
 ### 4. Verify
 
@@ -468,7 +468,7 @@ curl -X POST http://localhost:8080/api/v1/devices/register \
 
 ## Notification System
 
-Notifications are delivered via the Transactional Outbox pattern — they are written to the database as part of the same transaction as the triggering operation, then relayed to Kafka asynchronously. This guarantees no notification is lost even if Kafka is temporarily unavailable.
+Notifications are delivered via the Transactional Outbox pattern - they are written to the database as part of the same transaction as the triggering operation, then relayed to Kafka asynchronously. This guarantees no notification is lost even if Kafka is temporarily unavailable.
 
 ### Events and triggers
 
@@ -500,19 +500,19 @@ Notifications are delivered via the Transactional Outbox pattern — they are wr
 
 ## Running Tests
 
-Docker must be running — Testcontainers spins up real PostgreSQL, Redis, and Kafka containers.
+Docker must be running - Testcontainers spins up real PostgreSQL, Redis, and Kafka containers.
 
 ```bash
 # Full test suite (unit + integration)
 mvn test
 
-# Unit tests only — no Docker required, runs in seconds
+# Unit tests only - no Docker required, runs in seconds
 mvn test -Dtest="TransferServiceImplTest"
 
 # Integration tests only
 mvn test -Dtest="TransferIntegrationTest"
 
-# Verbose output — see each test result as it runs
+# Verbose output - see each test result as it runs
 mvn test -Dsurefire.useFile=false
 ```
 
@@ -535,7 +535,7 @@ mvn test -Dsurefire.useFile=false
 
 ## Cloud Deployment
 
-The application is designed for cloud deployment with minimal changes. Config is fully environment-variable driven — no code changes required to point at managed cloud services.
+The application is designed for cloud deployment with minimal changes. Config is fully environment-variable driven - no code changes required to point at managed cloud services.
 
 ### Recommended AWS architecture
 
@@ -561,7 +561,7 @@ aws secretsmanager create-secret \
   --secret-string '{"DB_PASSWORD":"...","JWT_SECRET":"..."}'
 ```
 
-3. **Set `SPRING_PROFILES_ACTIVE=prod`** in the ECS task definition to activate `application-prod.yml` — this enables JSON logging, larger connection pools, and Secrets Manager import.
+3. **Set `SPRING_PROFILES_ACTIVE=prod`** in the ECS task definition to activate `application-prod.yml` - this enables JSON logging, larger connection pools, and Secrets Manager import.
 
 4. **Run Flyway migrations** against RDS before first deploy:
 ```bash
@@ -572,8 +572,8 @@ mvn flyway:migrate -Dflyway.url=jdbc:postgresql://:5432/p2p_ledger
 
 | File | Change |
 |---|---|
-| `application-prod.yml` | Already present — activates via `SPRING_PROFILES_ACTIVE=prod` |
-| `docker-compose.yml` | Not used in production — replaced by ECS task definitions |
+| `application-prod.yml` | Already present - activates via `SPRING_PROFILES_ACTIVE=prod` |
+| `docker-compose.yml` | Not used in production - replaced by ECS task definitions |
 | Infrastructure | PostgreSQL → RDS, Redis → ElastiCache, Kafka → MSK |
 | Secrets | `.env` file → AWS Secrets Manager |
 
@@ -581,14 +581,14 @@ mvn flyway:migrate -Dflyway.url=jdbc:postgresql://:5432/p2p_ledger
 
 ## Security
 
-- All secrets are environment variables — nothing sensitive in source code
+- All secrets are environment variables - nothing sensitive in source code
 - Passwords are BCrypt-hashed with cost factor 12
 - JWT tokens are stateless and validated on every request (HS256, configurable expiry)
-- Authorization is enforced in the service layer — users can only act on wallets they own
+- Authorization is enforced in the service layer - users can only act on wallets they own
 - Error responses never expose stack traces or internal details
 - SQL injection is prevented throughout by JPA parameterised queries
 - New-IP login detection triggers immediate Push + Email security alert
 - Large withdrawals (above configurable threshold) trigger Push + Email security alert
 - Password changes trigger Push + Email security alert
 - FCM tokens are automatically deactivated when Firebase reports them as invalid
-- Firebase service account JSON must never be committed — enforced via `.gitignore`
+- Firebase service account JSON must never be committed - enforced via `.gitignore`
