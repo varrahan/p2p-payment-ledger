@@ -160,3 +160,29 @@ Each notification type is routed to the channel that serves its purpose — not 
 | Compliance (monthly statement, ToS update) | Email only | "Durable medium" requirement under PSD2 / MiFID II |
 
 ---
+
+## Prerequisites
+
+| Requirement | Version | Notes |
+|---|---|---|
+| Docker Desktop | Latest | Required for all infrastructure |
+| Java JDK | 21 | Temurin recommended |
+| Maven | 3.x | For running tests locally |
+| SendGrid account | — | Free tier sufficient — [sendgrid.com](https://sendgrid.com) |
+| Firebase project | — | Free tier sufficient — [console.firebase.google.com](https://console.firebase.google.com) |
+
+### Install Java 21
+
+**macOS:**
+```bash
+brew install --cask temurin@21
+```
+
+**Linux:**
+```bash
+sudo apt install temurin-21-jdk
+```
+
+**Windows:** Download the `.msi` from [adoptium.net](https://adoptium.net) — check "Set JAVA_HOME" during install.
+
+---
