@@ -32,3 +32,11 @@ jobs:
     - name: Build Docker Image
       run: |
         docker build . -t p2p-payment-ledger:latest
+
+    - name: Upload Build Artifacts
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: target-dir
+        path: target/*.jar
+        retention-days: 5
