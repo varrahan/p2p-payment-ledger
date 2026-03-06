@@ -22,7 +22,7 @@
         <testcontainers.version>1.19.8</testcontainers.version>
         <flyway.version>10.11.0</flyway.version>
         <lombok.version>1.18.32</lombok.version>
-        <jjwt.version>0.12.5</jjwt.version>
+        <jjwt.version>0.13.0</jjwt.version>
     </properties>
 
     <dependencies>
