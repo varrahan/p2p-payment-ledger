@@ -311,6 +311,12 @@ Open `.env` and fill in the required values - at minimum:
 
 ```bash
 docker compose up --build
+
+# Or, if you want to ensure you are not buildign with cache
+docker compose build --no-cache
+
+# -d to run container on the background
+docker compose up -d
 ```
 
 First run downloads images and builds the JAR - allow 5–10 minutes. Subsequent runs start in under 30 seconds.
